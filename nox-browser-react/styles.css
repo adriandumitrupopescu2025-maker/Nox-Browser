@@ -1,0 +1,826 @@
+/* --- TEMA DARK (Implicită) --- */
+:root {
+  --rail-w: 44px;
+  --bg-primary: #1e1e2e;
+  --bg-secondary: #2a2a3c;
+  --bg-tertiary: #313244;
+  --text-main: #cdd6f4;
+  --text-muted: #a6adc8;
+  --accent: #89b4fa;
+  --accent-hover: #b4befe;
+  --border-color: #45475a;
+  --tab-active-bg: #313244;
+  --input-bg: #181825;
+
+  --text-color: var(--text-main);
+  --bg-bar: var(--bg-secondary);
+  --bg-tab-inactive: var(--bg-secondary);
+  --bg-tab-active: var(--tab-active-bg);
+  --hover-color: var(--accent);
+}
+
+/* --- TEMA LIGHT (Bleu Deschis Modern / Soft Blue) --- */
+body.light-theme {
+  --bg-primary: #eef5f9;
+  --bg-secondary: #dceaf2;
+  --bg-tertiary: #cde1ee;
+  --text-main: #1b2a38;
+  --text-muted: #5a7085;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --border-color: #b8d2e4;
+  --tab-active-bg: #eef5f9;
+  --input-bg: #ffffff;
+
+  --text-color: var(--text-main);
+  --bg-bar: var(--bg-secondary);
+  --bg-tab-inactive: var(--bg-secondary);
+  --bg-tab-active: var(--tab-active-bg);
+  --hover-color: var(--accent);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#nox-app-shell {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-color);
+}
+
+#nox-app-shell {
+  position: relative;
+  display: flex;
+}
+
+/* 1. BANDĂ STÂNGĂ (44px): Buton ascundere bară sus + Tab-uri verticale + Tab nou */
+#left-rail {
+  width: var(--rail-w);
+  min-width: var(--rail-w);
+  height: 100%;
+  background: var(--bg-bar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+  gap: 6px;
+  z-index: 30;
+  user-select: none;
+}
+
+#toggle-nav-btn,
+#new-tab-btn,
+#menu-btn,
+#add-folder-btn {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#toggle-nav-btn:hover,
+#new-tab-btn:hover,
+#menu-btn:hover,
+#add-folder-btn:hover {
+  background: var(--hover-color);
+  color: #111827;
+}
+
+body.nav-hidden #toggle-nav-btn {
+  border-color: var(--accent);
+}
+
+#tabs-bar {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#tabs-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 2px 0;
+}
+
+.tab {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: var(--bg-tab-inactive);
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  border: 1px solid var(--border-color);
+}
+
+.tab:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-color);
+}
+
+.tab.active {
+  background: var(--bg-tab-active);
+  color: var(--text-color);
+  border-color: var(--accent);
+  font-weight: bold;
+}
+
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 26px;
+  font-size: 11px;
+}
+
+.tab .close-btn {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-size: 10px;
+  display: none;
+  place-items: center;
+}
+
+.tab:hover .close-btn {
+  display: grid;
+}
+
+.tab .close-btn:hover {
+  background: #e74c3c;
+  color: #ffffff;
+}
+
+/* 2. ZONA CENTRALĂ */
+#center-workspace {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+#contents-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 3. BANDĂ DREAPTĂ (44px): Buton meniu/setări + Marcaje verticale */
+#right-rail {
+  width: var(--rail-w);
+  min-width: var(--rail-w);
+  height: 100%;
+  background: var(--bg-bar);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+  gap: 6px;
+  z-index: 30;
+  user-select: none;
+}
+
+#bookmarks-bar {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#bookmarks-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.bookmark-item {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.bookmark-item:hover {
+  background: var(--hover-color);
+  color: #111827;
+}
+
+.bookmark-item .remove-bm {
+  position: absolute;
+  top: 0;
+  right: 1px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.bookmark-item .remove-bm:hover {
+  color: #e74c3c;
+}
+
+.bookmark-item.drag-over {
+  outline: 2px dashed var(--accent);
+  background: var(--bg-primary);
+}
+
+/* BARĂ INSTRUMENTE GLISANTĂ DIN DREAPTA SPRE STÂNGA */
+#main-toolbar {
+  position: fixed;
+  top: 6px;
+  right: var(--rail-w);
+  height: 36px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px 0 0 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+#main-toolbar.hidden {
+  display: none;
+}
+
+.toolbar-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#main-toolbar button {
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#main-toolbar button:hover {
+  background: var(--hover-color);
+  color: #111827;
+}
+
+/* TOOLTIP TIP WINDOWS 10/11 PE DATA-TOOLTIP */
+[data-tooltip] {
+  position: relative;
+}
+
+#left-rail [data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: fixed;
+  left: calc(var(--rail-w) + 8px);
+  background: var(--bg-secondary);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: normal;
+  white-space: nowrap;
+  z-index: 3000;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+#right-rail [data-tooltip]:hover::after,
+#main-toolbar [data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: fixed;
+  right: calc(var(--rail-w) + 8px);
+  background: var(--bg-secondary);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: normal;
+  white-space: nowrap;
+  z-index: 3000;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* 4. CONȚINUT TAB, BARĂ ADRESE SUS & SPLIT VIEW */
+.tab-content {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tab-content.active {
+  display: flex;
+}
+
+.split-container {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.split-container.vertical {
+  flex-direction: row !important;
+}
+
+.split-container.horizontal {
+  flex-direction: column !important;
+}
+
+.pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.pane-nav {
+  display: flex;
+  gap: 5px;
+  background: var(--bg-secondary);
+  padding: 4px 6px;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Când butonul din stânga sus ascunde bara superioară */
+body.nav-hidden .pane-nav {
+  display: none !important;
+}
+
+.pane-nav button {
+  padding: 2px 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pane-nav button:hover {
+  background: var(--hover-color);
+  color: #111827;
+}
+
+.pane-nav input {
+  flex: 1;
+  padding: 4px 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 3px;
+}
+
+.pane-zoom-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pane-zoom-label {
+  min-width: 38px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.btn-bookmark {
+  background: transparent !important;
+  border: none !important;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.pane-viewport {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+webview {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.file-manager {
+  padding: 10px;
+  overflow-y: auto;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+
+.file-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  word-break: break-all;
+  font-size: 12px;
+  color: var(--text-color);
+}
+
+.file-item:hover {
+  background: var(--hover-color);
+  color: #111827;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1500;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 450px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  color: var(--text-color);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.close-modal {
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.setting-item input[type="text"],
+.setting-item input[type="password"],
+.setting-item select {
+  padding: 6px 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 4px;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  text-align: right;
+}
+
+#save-settings-btn {
+  padding: 6px 15px;
+  background: var(--hover-color);
+  color: #111827;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.history-item {
+  display: flex;
+  gap: 15px;
+  padding: 10px;
+  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  font-size: 13px;
+}
+
+.history-item:hover {
+  background: var(--bg-secondary);
+}
+
+.history-date {
+  color: var(--text-muted);
+  font-size: 11px;
+  min-width: 130px;
+}
+
+.history-link {
+  color: var(--hover-color);
+  text-decoration: none;
+  font-weight: bold;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-link:hover {
+  text-decoration: underline;
+}
+
+.history-url {
+  color: var(--text-muted);
+  font-size: 12px;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bookmark-popover {
+  position: fixed;
+  z-index: 2000;
+  width: 270px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bookmark-popover.hidden {
+  display: none;
+}
+
+.bm-popover-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--text-main);
+}
+
+.bookmark-popover input,
+.bookmark-popover select {
+  padding: 5px 8px;
+  background: var(--input-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.bm-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.bm-popover-actions button {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.bm-popover-actions #bm-save-btn {
+  background: var(--accent);
+  color: #111827;
+  border-color: var(--accent);
+}
+
+.bookmark-folder-menu {
+  position: fixed;
+  z-index: 2000;
+  min-width: 220px;
+  max-width: 320px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.folder-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  font-size: 12px;
+}
+
+.folder-entry-title {
+  flex: 1;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-entry-title:hover {
+  color: var(--accent);
+}
+
+.folder-empty {
+  padding: 6px 8px;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.folder-menu-footer {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delete-folder-btn {
+  background: transparent;
+  border: none;
+  color: #e74c3c;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.delete-folder-btn:hover {
+  text-decoration: underline;
+}
+
+.password-prompt-bar {
+  position: fixed;
+  top: 48px;
+  right: calc(var(--rail-w) + 12px);
+  z-index: 2500;
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.password-prompt-bar.hidden {
+  display: none;
+}
+
+.password-prompt-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.password-prompt-actions button {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.password-prompt-actions #pwd-save-confirm-btn {
+  background: var(--accent);
+  color: #111827;
+  border-color: var(--accent);
+  font-weight: bold;
+}
+
+.passwords-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.passwords-table th,
+.passwords-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.passwords-table th {
+  background: var(--bg-secondary);
+}
+
+.pwd-action-btn {
+  padding: 4px 8px;
+  margin-right: 4px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.pwd-action-btn.danger {
+  background: #e74c3c;
+  color: #fff;
+  border-color: #e74c3c;
+}

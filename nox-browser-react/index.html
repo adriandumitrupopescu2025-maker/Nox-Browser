@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Nox Browser</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="nox-app-shell">
+    <!-- 1. BANDĂ STÂNGĂ (44px): Buton ascundere/afișare bară sus + Tab-uri verticale + Tab nou -->
+    <aside id="left-rail" aria-label="Navigare și tab-uri">
+      <button id="toggle-nav-btn" type="button" data-tooltip="Ascunde bara de sus" aria-label="Ascunde sau arată bara de sus">▲</button>
+
+      <div id="tabs-bar">
+        <div id="tabs-container"></div>
+      </div>
+
+      <button id="new-tab-btn" type="button" data-tooltip="Tab nou" title="Tab nou">+</button>
+    </aside>
+
+    <!-- 2. ZONA CENTRALĂ (BARĂ ADRESE SUS + CONȚINUT TAB / SPLIT-VIEW) -->
+    <main id="center-workspace">
+      <div id="contents-container"></div>
+    </main>
+
+    <!-- 3. BANDĂ DREAPTĂ (44px): Buton meniu/setări sus + Marcaje & foldere verticale -->
+    <aside id="right-rail" aria-label="Setări și marcaje">
+      <button id="menu-btn" type="button" data-tooltip="Meniu / Instrumente" title="Comută Meniu / Instrumente">☰</button>
+
+      <div id="bookmarks-bar">
+        <button id="add-folder-btn" type="button" data-tooltip="Folder nou în marcaje" title="Folder nou în bara de marcaje">+📁</button>
+        <div id="bookmarks-container"></div>
+      </div>
+    </aside>
+
+    <!-- BARĂ INSTRUMENTE GLISANTĂ DIN DREAPTA SPRE STÂNGA -->
+    <div id="main-toolbar" class="hidden">
+      <div class="toolbar-group">
+        <button id="btn-split-v-global" type="button" data-tooltip="Split Vertical">✂️V</button>
+        <button id="btn-split-h-global" type="button" data-tooltip="Split Orizontal">✂️H</button>
+      </div>
+      <div class="toolbar-group right">
+        <button id="adblock-toggle-btn" type="button" data-tooltip="AdBlock">🛡️</button>
+        <button id="theme-toggle-btn" type="button" data-tooltip="Schimbă tema">🌓</button>
+        <button id="passwords-btn" type="button" data-tooltip="Parole">🔑</button>
+        <button id="history-btn" type="button" data-tooltip="Istoric">📜</button>
+        <button id="settings-btn" type="button" data-tooltip="Setări">⚙️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SETĂRI -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙️ Setări Browser</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body">
+
+        <div class="setting-item">
+          <label for="default-zoom-input">Zoom implicit pagini (%):</label>
+          <input type="number" id="default-zoom-input" min="50" max="200" step="5" value="100" />
+        </div>
+
+        <div class="setting-item">
+          <label for="homepage-input">Pagina de start (Home):</label>
+          <input type="text" id="homepage-input" placeholder="https://google.com sau cale locală" />
+        </div>
+
+        <div class="setting-item">
+          <label for="show-home-btn">Arată butonul Home în bara de navigare:</label>
+          <input type="checkbox" id="show-home-btn" checked />
+        </div>
+
+        <div class="setting-item">
+          <label for="show-bookmarks-bar">Arată bara de marcaje (Bookmarks):</label>
+          <input type="checkbox" id="show-bookmarks-bar" checked />
+        </div>
+
+        <div class="setting-item">
+          <label for="search-engine">Motor de căutare implicit:</label>
+          <select id="search-engine">
+            <option value="https://www.google.com/search?q=">Google</option>
+            <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
+            <option value="https://www.bing.com/search?q=">Bing</option>
+          </select>
+        </div>
+
+        <hr style="margin: 14px 0; border: 0; border-top: 1px solid var(--border-color);" />
+        <div class="setting-item">
+          <label for="sync-url-input">URL endpoint PHP (`sync.php`):</label>
+          <input type="text" id="sync-url-input" placeholder="adresa fisierului sync.php" />
+        </div>
+
+        <div class="setting-item">
+          <label for="sync-id-input">ID cont sincronizare:</label>
+          <input type="text" id="sync-id-input" placeholder="ex: nume-id" />
+        </div>
+
+        <div class="setting-item">
+          <label for="sync-key-input">Cheie criptare parole la sync:</label>
+          <input type="password" id="sync-key-input" placeholder="Parolă/cheie secretă" />
+        </div>
+
+        <div class="setting-item">
+          <label for="sync-token-input">Token API opțional (`X-Sync-Token`):</label>
+          <input type="password" id="sync-token-input" placeholder="Opțional" />
+        </div>
+
+        <div class="setting-item">
+          <label for="auto-sync-checkbox">Sincronizare automată (Pull la pornire / Push la modificări):</label>
+          <input type="checkbox" id="auto-sync-checkbox" checked />
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap;">
+          <button id="sync-push-btn" type="button">⬆️ Trimite spre server (Push)</button>
+          <button id="sync-pull-btn" type="button">⬇️ Adu de pe server (Pull)</button>
+          <span id="sync-status-msg" style="font-size: 12px;"></span>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button id="save-settings-btn" type="button">Salvează Setările</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPOVER ADĂUGARE MARCAJ -->
+  <div id="bookmark-popover" class="bookmark-popover hidden">
+    <div class="bm-popover-title">Salvează marcaj</div>
+    <input type="text" id="bm-title-input" placeholder="Titlu marcaj" />
+    <select id="bm-folder-select">
+      <option value="">Bara de marcaje (rădăcină)</option>
+    </select>
+    <div class="bm-popover-actions">
+      <button id="bm-save-btn" type="button">Salvează</button>
+      <button id="bm-cancel-btn" type="button">Anulează</button>
+    </div>
+  </div>
+
+  <!-- POPOVER FOLDER NOU -->
+  <div id="folder-popover" class="bookmark-popover hidden">
+    <div class="bm-popover-title">Folder nou în marcaje</div>
+    <input type="text" id="new-folder-name-input" placeholder="Ex: Media, Servicii, Utile" />
+    <div class="bm-popover-actions">
+      <button id="create-folder-save-btn" type="button">Creează</button>
+      <button id="create-folder-cancel-btn" type="button">Anulează</button>
+    </div>
+  </div>
+
+  <!-- BARĂ SALVARE PAROLĂ -->
+  <div id="password-prompt-bar" class="password-prompt-bar hidden">
+    <span id="password-prompt-text">Salvezi parola pentru acest site?</span>
+    <div class="password-prompt-actions">
+      <button id="pwd-save-confirm-btn" type="button">Salvează</button>
+      <button id="pwd-save-dismiss-btn" type="button">Nu acum</button>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

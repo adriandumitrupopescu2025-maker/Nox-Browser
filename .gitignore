@@ -1,0 +1,38 @@
+# Dependințe Node.js
+node_modules/
+nox-browser-react/node_modules/
+
+# Foldere de build și pachete generate (electron-builder / .deb / .rpm / .exe)
+dist/
+release/
+out/
+nox-browser-react/dist/
+nox-browser-react/release/
+nox-browser-react/out/
+*.deb
+*.rpm
+*.exe
+*.AppImage
+*.zip
+*.tar.gz
+
+# Date locale personale ale browserului (nu se publică în repo)
+bookmarks.json
+history.json
+passwords.json
+nox-browser-react/bookmarks.json
+nox-browser-react/history.json
+nox-browser-react/passwords.json
+
+# Configurări locale cu credențiale server sync
+nox-sync/config.php
+.env
+.env.local
+
+# Fișiere temporare, log-uri și sistem
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+*~
+*.bak
