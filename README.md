@@ -29,6 +29,7 @@ nox-browser/
     ├── nox-sync.sql          # Structura bazei de date (tabelul user_sync_state)
     └── sync.php              # Endpoint API pentru Push / Pull
 
+==============================================================================
 ## Previzualizare
 
 ### Fereastra principală (benzi laterale verticale)
@@ -42,3 +43,30 @@ nox-browser/
 
 ### Settings
 ![Nox Browser — Setări Browser](screenshots/05.png)
+
+==============================================================================
+## Compilare și sincronizare bază de date
+
+### Compilare din sursă (Electron)
+1. Intră în folderul aplicației și instalează dependențele:
+   ```bash
+   cd nox-browser-react
+   npm install
+
+2. Rulează aplicația în modul de dezvoltare sau generează pachetele cu electron-builder:
+    ```bash
+    npm start
+    npm run build:deb
+    npm run build:rpm
+    npm run dist:win
+
+================================================================================
+### Sincronizare opțională cu bază de date (PHP + MySQL)
+
+Aplicația funcționează complet local, dar opțional poți activa sincronizarea marcajelor, setărilor și parolelor criptate pe propriul server:
+
+    Creează o bază de date MySQL și importă schema din nox-sync/nox-sync.sql
+
+    Pune fișierul nox-sync/sync.php pe un server web cu PHP + extensia MySQL (mysqli/PDO) și configurează credențialele bazei de date în el.
+
+    Introdu URL-ul endpoint-ului sync.php în setările de sincronizare din Nox Browser.
