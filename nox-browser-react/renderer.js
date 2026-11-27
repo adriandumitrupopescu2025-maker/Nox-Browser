@@ -25,9 +25,18 @@ const passwordPromptText = document.getElementById('password-prompt-text');
 const pwdSaveConfirmBtn = document.getElementById('pwd-save-confirm-btn');
 const pwdSaveDismissBtn = document.getElementById('pwd-save-dismiss-btn');
 
+const fileContextMenu = document.getElementById('file-context-menu');
+const textViewerModal = document.getElementById('text-viewer-modal');
+const textViewerTitle = document.getElementById('text-viewer-title');
+const textViewerContent = document.getElementById('text-viewer-content');
+const closeTextViewerBtn = document.getElementById('close-text-viewer-btn');
+const closeTextViewerFooterBtn = document.getElementById('close-text-viewer-footer-btn');
+
 let pendingPasswordCapture = null;
 let autoPushTimer = null;
 let isApplyingRemoteSync = false;
+let fmToastTimer = null;
+let copiedLocalItem = null; // { path, name, isDir }
 
 const DOMAIN_ZOOM_STORAGE_KEY = 'nox-domain-zoom';
 
@@ -107,6 +116,25 @@ function handleZoomShortcut(e) {
 }
 
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeTextViewer();
+    hideFileContextMenu();
+  }
+
+  // Ctrl+V în panoul activ de manager de fișiere -> Paste elementul copiat
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'v') {
+    const tag = (document.activeElement?.tagName || '').toLowerCase();
+    const isInput = tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable;
+    if (!isInput && copiedLocalItem) {
+      const activePane = getActivePaneElement();
+      if (activePane && typeof activePane._noxPasteCopiedItem === 'function') {
+        e.preventDefault();
+        activePane._noxPasteCopiedItem();
+        return;
+      }
+    }
+  }
+
   if (handleZoomShortcut(e)) {
     e.preventDefault();
     return;
@@ -157,6 +185,7 @@ document.addEventListener(
 menuBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   closeFolderDropdown();
+  hideFileContextMenu();
   mainToolbar.classList.toggle('hidden');
 });
 
@@ -531,6 +560,9 @@ function closeFolderDropdown() {
 }
 
 document.addEventListener('click', (e) => {
+  if (fileContextMenu && !fileContextMenu.classList.contains('hidden') && !fileContextMenu.contains(e.target)) {
+    hideFileContextMenu();
+  }
   if (openFolderDropdown && !openFolderDropdown.contains(e.target) && !e.target.closest('.bookmark-folder-btn')) {
     closeFolderDropdown();
   }
@@ -870,6 +902,181 @@ function closeTab(tabId) {
   }
 }
 
+// --- 6B. HELPER ICONOGRAFIE & ACȚIUNI FIȘIERE LOCALE ---
+function showFmToast(msg) {
+  let el = document.getElementById('fm-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'fm-toast';
+    el.className = 'fm-toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  if (fmToastTimer) clearTimeout(fmToastTimer);
+  fmToastTimer = setTimeout(() => {
+    el.style.display = 'none';
+  }, 2600);
+}
+
+function hideFileContextMenu() {
+  if (fileContextMenu) {
+    fileContextMenu.classList.add('hidden');
+    fileContextMenu.innerHTML = '';
+  }
+}
+
+function closeTextViewer() {
+  if (textViewerModal) textViewerModal.classList.remove('active');
+}
+if (closeTextViewerBtn) closeTextViewerBtn.addEventListener('click', closeTextViewer);
+if (closeTextViewerFooterBtn) closeTextViewerFooterBtn.addEventListener('click', closeTextViewer);
+
+function openTextViewer(fileName, content) {
+  if (!textViewerModal || !textViewerTitle || !textViewerContent) return;
+  textViewerTitle.textContent = `📄 ${fileName}`;
+  textViewerContent.textContent = content;
+  textViewerModal.classList.add('active');
+}
+
+function getFileCategory(item) {
+  if (item.isDir) return 'folder';
+  const ext = path.extname(item.name || '').toLowerCase();
+  if (ext === '.pdf') return 'pdf';
+  if (['.txt', '.md', '.log', '.json', '.xml', '.csv', '.js', '.ts', '.css', '.html', '.php', '.py', '.c', '.cpp', '.cs', '.sql', '.sh'].includes(ext)) {
+    return 'text';
+  }
+  if (['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.bmp'].includes(ext)) {
+    return 'image';
+  }
+  if (['.mp4', '.mkv', '.avi', '.mov', '.webm', '.mp3', '.wav', '.ogg', '.flac'].includes(ext)) {
+    return 'media';
+  }
+  return 'file';
+}
+
+function getFileIconSvg(category) {
+  if (category === 'folder') {
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+  }
+  if (category === 'pdf' || category === 'text') {
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`;
+  }
+  if (category === 'image') {
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`;
+  }
+  if (category === 'media') {
+    return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+  }
+  return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
+}
+
+async function handleOpenLocalItem(item, onEnterDir, onError) {
+  if (item.isDir) {
+    onEnterDir(item.path);
+    return;
+  }
+  const res = await ipcRenderer.invoke('open-file', item.path);
+  if (!res.success) {
+    onError(res.error || 'Nu s-a putut deschide fișierul.');
+    return;
+  }
+  if (res.mode === 'text') {
+    openTextViewer(res.fileName || item.name, res.content || '');
+  }
+}
+
+async function pasteCopiedItemIntoDir(destDir, refreshDirFn, onError) {
+  if (!copiedLocalItem || !copiedLocalItem.path) {
+    showFmToast('ℹ️ Nimic copiat încă.');
+    return;
+  }
+  const res = await ipcRenderer.invoke('copy-file', {
+    srcPath: copiedLocalItem.path,
+    destDir
+  });
+  if (res.success) {
+    showFmToast(`Lipit: ${path.basename(res.destPath || copiedLocalItem.name)}`);
+    refreshDirFn();
+  } else {
+    onError(res.error || 'Eroare la lipire (Paste).');
+  }
+}
+
+function showFileContextMenu(x, y, item, currentDir, refreshDirFn, onEnterDir, onError) {
+  if (!fileContextMenu) return;
+  fileContextMenu.innerHTML = '';
+
+  const addAction = (label, className, onClick) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `file-ctx-item ${className || ''}`.trim();
+    btn.textContent = label;
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      hideFileContextMenu();
+      await onClick();
+    });
+    fileContextMenu.appendChild(btn);
+  };
+
+  if (item) {
+    addAction('Deschide', '', () => handleOpenLocalItem(item, onEnterDir, onError));
+    if (!item.isDir) {
+      addAction('Deschide cu...', '', async () => {
+        const res = await ipcRenderer.invoke('open-file-with', item.path);
+        if (!res.success && !res.cancelled) {
+          onError(res.error || 'Nu s-a putut deschide dialogul.');
+        }
+      });
+    }
+    addAction('Copiază', '', async () => {
+      copiedLocalItem = { path: item.path, name: item.name, isDir: item.isDir };
+      showFmToast(`Copiat în memorie: ${item.name} (mergi în folderul dorit și apasă Lipește / Ctrl+V)`);
+    });
+  }
+
+  if (copiedLocalItem) {
+    addAction(`Lipește aici („${copiedLocalItem.name}”)`, '', async () => {
+      await pasteCopiedItemIntoDir(currentDir, refreshDirFn, onError);
+    });
+  }
+
+  if (item) {
+    const sep = document.createElement('div');
+    sep.className = 'file-ctx-sep';
+    fileContextMenu.appendChild(sep);
+
+    addAction('Mută la Gunoi', 'danger', async () => {
+      const res = await ipcRenderer.invoke('trash-file', item.path);
+      if (res.success) {
+        showFmToast(`Mutat la Gunoi: ${item.name}`);
+        refreshDirFn();
+      } else {
+        onError(res.error || 'Eroare la mutarea la Gunoi.');
+      }
+    });
+
+    addAction('Șterge definitiv...', 'danger', async () => {
+      const ok = window.confirm(`Ștergi definitiv „${item.name}”? Acțiunea nu poate fi anulată.`);
+      if (!ok) return;
+      const res = await ipcRenderer.invoke('delete-file-permanent', item.path);
+      if (res.success) {
+        showFmToast(`Șters definitiv: ${item.name}`);
+        refreshDirFn();
+      } else {
+        onError(res.error || 'Eroare la ștergere.');
+      }
+    });
+  }
+
+  if (!fileContextMenu.children.length) return;
+
+  fileContextMenu.style.left = `${Math.min(x, window.innerWidth - 240)}px`;
+  fileContextMenu.style.top = `${Math.min(y, window.innerHeight - 230)}px`;
+  fileContextMenu.classList.remove('hidden');
+}
+
 // --- 7. SPLIT VIEW, PANOURI NAVIGARE & ZOOM ---
 function addPane(tabId, orientation, targetPath) {
   const tabContent = document.getElementById(tabId);
@@ -963,6 +1170,7 @@ function addPane(tabId, orientation, targetPath) {
   pane._noxZoomStep = (delta) => applyPaneZoom(currentZoomPercent + delta);
   pane._noxZoomReset = () => resetPaneZoomToDefault();
   pane._noxApplyZoomDirect = (percent) => applyPaneZoom(percent, { persistManual: false });
+  pane._noxPasteCopiedItem = null;
 
   const localHistory = [];
   let localHistoryIndex = -1;
@@ -1033,6 +1241,7 @@ function addPane(tabId, orientation, targetPath) {
   async function loadLocation(loc, isNewNavigation = true) {
     loc = loc.trim();
     viewport.innerHTML = '';
+    pane._noxPasteCopiedItem = null;
 
     const isLocalPath = loc.startsWith('/') || loc.match(/^[a-zA-Z]:\\/) || loc.startsWith('file://');
     const isUrl = loc.includes('.') && !loc.includes(' ');
@@ -1057,6 +1266,23 @@ function addPane(tabId, orientation, targetPath) {
         const items = await ipcRenderer.invoke('read-dir', cleanPath);
         const fmContainer = document.createElement('div');
         fmContainer.className = 'file-manager';
+
+        const refreshCurrentDir = () => loadLocation(cleanPath, false);
+        const enterSubDir = (dirPath) => {
+          urlInput.value = dirPath;
+          loadLocation(dirPath);
+        };
+        const showFmError = (msg) => showFmToast(`❌ ${msg}`);
+
+        pane._noxPasteCopiedItem = () => pasteCopiedItemIntoDir(cleanPath, refreshCurrentDir, showFmError);
+
+        // Clic dreapta pe spațiul gol din folder -> arată "Lipește aici" dacă există ceva copiat
+        fmContainer.addEventListener('contextmenu', (e) => {
+          if (e.target.closest('.file-item')) return;
+          e.preventDefault();
+          e.stopPropagation();
+          showFileContextMenu(e.clientX, e.clientY, null, cleanPath, refreshCurrentDir, enterSubDir, showFmError);
+        });
 
         fmContainer.addEventListener('dragover', (e) => {
           e.preventDefault();
@@ -1083,30 +1309,32 @@ function addPane(tabId, orientation, targetPath) {
         const parentDir = path.dirname(cleanPath);
         if (parentDir !== cleanPath) {
           const upItem = document.createElement('div');
-          upItem.className = 'file-item';
-          upItem.innerHTML = `<div class="icon">📁</div><div>.. (Inapoi)</div>`;
-          upItem.addEventListener('click', () => {
-            urlInput.value = parentDir;
-            loadLocation(parentDir);
-          });
+          upItem.className = 'file-item type-folder';
+          upItem.innerHTML = `<div class="icon-wrap">${getFileIconSvg('folder')}</div><div>.. (Înapoi)</div>`;
+          upItem.addEventListener('click', () => enterSubDir(parentDir));
           fmContainer.appendChild(upItem);
         }
 
         items.forEach(item => {
+          const category = getFileCategory(item);
           const itemEl = document.createElement('div');
-          itemEl.className = 'file-item';
+          itemEl.className = `file-item type-${category}`;
           itemEl.setAttribute('draggable', 'true');
-          itemEl.innerHTML = `<div class="icon">${item.isDir ? '📁' : '📄'}</div><div>${item.name}</div>`;
+          const displayLabel = item.isSymlink ? `${item.name} ↗` : item.name;
+          itemEl.innerHTML = `<div class="icon-wrap">${getFileIconSvg(category)}</div><div>${displayLabel}</div>`;
 
           itemEl.addEventListener('dragstart', (e) => {
             e.dataTransfer.setData('text/plain', item.path);
           });
 
           itemEl.addEventListener('dblclick', () => {
-            if (item.isDir) {
-              urlInput.value = item.path;
-              loadLocation(item.path);
-            }
+            handleOpenLocalItem(item, enterSubDir, showFmError);
+          });
+
+          itemEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showFileContextMenu(e.clientX, e.clientY, item, cleanPath, refreshCurrentDir, enterSubDir, showFmError);
           });
 
           fmContainer.appendChild(itemEl);

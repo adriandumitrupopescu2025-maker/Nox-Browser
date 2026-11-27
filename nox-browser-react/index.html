@@ -159,6 +159,25 @@
     </div>
   </div>
 
+  <!-- MENIU CONTEXTUAL FIȘIERE LOCALE -->
+  <div id="file-context-menu" class="file-context-menu hidden"></div>
+
+  <!-- MODAL VIZUALIZARE FIȘIER .TXT -->
+  <div id="text-viewer-modal" class="modal">
+    <div class="modal-content" style="width: 680px; max-width: 92vw; max-height: 85vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h2 id="text-viewer-title">📄 Fișier text</h2>
+        <span id="close-text-viewer-btn" class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body" style="overflow-y: auto; flex: 1;">
+        <pre id="text-viewer-content" style="white-space: pre-wrap; word-break: break-word; font-family: monospace; font-size: 12.5px; line-height: 1.5; background: var(--input-bg); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);"></pre>
+      </div>
+      <div class="modal-footer">
+        <button id="close-text-viewer-footer-btn" type="button" class="pwd-action-btn">Închide</button>
+      </div>
+    </div>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 </html>

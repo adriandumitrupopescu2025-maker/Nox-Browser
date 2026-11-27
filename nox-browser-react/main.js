@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, clipboard, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Menu, MenuItem, clipboard, safeStorage, shell, dialog } = require('electron');
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -289,11 +290,31 @@ ipcMain.handle('toggle-adblock', (event, enable) => {
 ipcMain.handle('read-dir', async (event, dirPath) => {
   try {
     const items = await fs.promises.readdir(dirPath, { withFileTypes: true });
-    return items.map(item => ({
-      name: item.name,
-      isDir: item.isDirectory(),
-      path: path.join(dirPath, item.name)
-    }));
+    const resolved = await Promise.all(
+      items.map(async (item) => {
+        const fullPath = path.join(dirPath, item.name);
+        const isSymlink = item.isSymbolicLink();
+        let isDir = item.isDirectory();
+
+        // Urmărim ținta symlink-ului ca să știm dacă duce spre un folder sau spre un fișier
+        if (isSymlink) {
+          try {
+            const targetStat = await fs.promises.stat(fullPath);
+            isDir = targetStat.isDirectory();
+          } catch (e) {
+            isDir = false;
+          }
+        }
+
+        return {
+          name: item.name,
+          isDir,
+          isSymlink,
+          path: fullPath
+        };
+      })
+    );
+    return resolved;
   } catch (err) {
     throw new Error(err.message);
   }
@@ -305,6 +326,124 @@ ipcMain.handle('move-file', async (event, { srcPath, destDir }) => {
     const destPath = path.join(destDir, fileName);
     if (srcPath === destPath) return { success: true };
     await fs.promises.rename(srcPath, destPath);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Copiere fișier sau folder în folderul destinație
+ipcMain.handle('copy-file', async (event, { srcPath, destDir }) => {
+  try {
+    if (!srcPath || !fs.existsSync(srcPath)) {
+      return { success: false, error: 'Fișierul sursă nu există.' };
+    }
+    const targetFolder = destDir || path.dirname(srcPath);
+    if (!fs.existsSync(targetFolder)) {
+      return { success: false, error: 'Folderul destinație nu există.' };
+    }
+
+    // Evită copierea unui folder în interiorul lui însuși
+    const normSrc = path.resolve(srcPath);
+    const normDestFolder = path.resolve(targetFolder);
+    if (normDestFolder === normSrc || normDestFolder.startsWith(normSrc + path.sep)) {
+      return { success: false, error: 'Nu poți copia un folder în interiorul lui însuși.' };
+    }
+
+    const parsed = path.parse(srcPath);
+    let destPath = path.join(targetFolder, parsed.base);
+
+    if (destPath === srcPath || fs.existsSync(destPath)) {
+      let counter = 1;
+      do {
+        const suffix = counter === 1 ? ' (copy)' : ` (copy ${counter})`;
+        destPath = path.join(targetFolder, `${parsed.name}${suffix}${parsed.ext}`);
+        counter += 1;
+      } while (fs.existsSync(destPath));
+    }
+
+    await fs.promises.cp(srcPath, destPath, { recursive: true, errorOnExist: true });
+    return { success: true, destPath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Mutare la Gunoi (Trash / Recycle Bin) fără confirmare
+ipcMain.handle('trash-file', async (event, targetPath) => {
+  try {
+    if (!targetPath) {
+      return { success: false, error: 'Cale lipsă.' };
+    }
+    await shell.trashItem(targetPath);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Ștergere definitivă (doar după confirmare în UI)
+ipcMain.handle('delete-file-permanent', async (event, targetPath) => {
+  try {
+    if (!targetPath) {
+      return { success: false, error: 'Cale lipsă.' };
+    }
+    await fs.promises.rm(targetPath, { recursive: true, force: false });
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Deschidere fișier simplu (.txt, .pdf etc.)
+ipcMain.handle('open-file', async (event, filePath) => {
+  try {
+    if (!filePath || !fs.existsSync(filePath)) {
+      return { success: false, error: 'Fișierul nu există.' };
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    const stat = await fs.promises.stat(filePath);
+
+    if (ext === '.txt' && stat.size <= 2 * 1024 * 1024) {
+      const content = await fs.promises.readFile(filePath, 'utf8');
+      return { success: true, mode: 'text', content, fileName: path.basename(filePath) };
+    }
+
+    const errMsg = await shell.openPath(filePath);
+    if (errMsg) {
+      return { success: false, error: errMsg };
+    }
+    return { success: true, mode: 'external' };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Deschidere cu altă aplicație / dialog selectare
+ipcMain.handle('open-file-with', async (event, filePath) => {
+  try {
+    if (!filePath || !fs.existsSync(filePath)) {
+      return { success: false, error: 'Fișierul nu există.' };
+    }
+
+    if (process.platform === 'win32') {
+      spawn('rundll32.exe', ['shell32.dll,OpenAs_RunDLL', filePath], {
+        detached: true,
+        stdio: 'ignore'
+      }).unref();
+      return { success: true };
+    }
+
+    const picked = await dialog.showOpenDialog({
+      title: 'Alege aplicația cu care vrei să deschizi fișierul',
+      properties: ['openFile']
+    });
+    if (picked.canceled || !picked.filePaths.length) {
+      return { success: false, cancelled: true };
+    }
+
+    const appExe = picked.filePaths[0];
+    spawn(appExe, [filePath], { detached: true, stdio: 'ignore' }).unref();
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
