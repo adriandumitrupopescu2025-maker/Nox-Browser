@@ -28,3 +28,17 @@ nox-browser/
 └── nox-sync/                 # Server opțional de sincronizare (PHP + MySQL)
     ├── nox-sync.sql          # Structura bazei de date (tabelul user_sync_state)
     └── sync.php              # Endpoint API pentru Push / Pull
+
+## Previzualizare
+
+### Fereastra principală (benzi laterale verticale)
+![Nox Browser — Fereastra principală](screenshots/01.png,02.png)
+
+### Split-View & Manager local de fișiere
+![Nox Browser — Split-View și Manager de fișiere](screenshots/03.png)
+
+### Manager local de fișiere & Dark theme
+![Nox Browser — Manager local de fișiere și Dark theme](screenshots/04.png)
+
+### Settings
+![Nox Browser — Setări Browser](screenshots/05.png)
